@@ -789,28 +789,17 @@ your project requirements before committing to a full implementation.
 
 * **Structure:** Integrates human intervention points within an agent workflow.
 * **Goal:** Allow for human oversight, approval, correction, or tasks that AI cannot perform.
-* **ADK Primitives Used (Conceptual):**
-    * **Interaction:** Can be implemented using a custom **Tool** that pauses execution and sends a request to an external system (e.g., a UI, ticketing system) waiting for human input. The tool then returns the human's response to the agent.
-    * **Workflow:** Could use **LLM-Driven Delegation** (`transfer_to_agent`) targeting a conceptual "Human Agent" that triggers the external workflow, or use the custom tool within an `LlmAgent`.
+* **ADK Primitives Used:**
+    * **Interaction:** Implemented using the built-in **`request_input`** tool that pauses execution, sends a message to the user, and waits for human input. The tool then returns the human's response to the agent.
+    * **Workflow:** Use the built-in tool within an `LlmAgent`.
     * **State/Callbacks:** State can hold task details for the human; callbacks can manage the interaction flow.
-    * **Note:** ADK doesn't have a built-in "Human Agent" type, so this requires custom integration.
 
 === "Python"
 
     ```python
-    # Conceptual Code: Using a Tool for Human Approval
+    # Conceptual Code: Using the built-in request_input tool
     from google.adk.agents import LlmAgent, SequentialAgent
-    from google.adk.tools import FunctionTool
-
-
-    # --- Assume external_approval_tool exists ---
-    # This tool would:
-    # 1. Take details (e.g., request_id, amount, reason).
-    # 2. Send these details to a human review system (e.g., via API).
-    # 3. Poll or wait for the human response (approved/rejected).
-    # 4. Return the human's decision.
-    # async def external_approval_tool(amount: float, reason: str) -> str: ...
-    approval_tool = FunctionTool(func=external_approval_tool)
+    from google.adk.tools import request_input
 
 
     # Agent that prepares the request
@@ -821,11 +810,11 @@ your project requirements before committing to a full implementation.
     )
 
 
-    # Agent that calls the human approval tool
+    # Agent that calls the built-in request_input tool
     request_approval = LlmAgent(
         name="RequestHumanApproval",
-        instruction="Use the external_approval_tool with amount from state['approval_amount'] and reason from state['approval_reason'].",
-        tools=[approval_tool],
+        instruction="Use the request_input tool to ask the user to approve the amount from state['approval_amount'] and reason from state['approval_reason'].",
+        tools=[request_input],
         output_key="human_decision"
     )
 
@@ -846,31 +835,8 @@ your project requirements before committing to a full implementation.
 === "Typescript"
 
     ```typescript
-    // Conceptual Code: Using a Tool for Human Approval
-    import { LlmAgent, SequentialAgent, FunctionTool } from '@google/adk';
-    import { z } from 'zod';
-
-    // --- Assume externalApprovalTool exists ---
-    // This tool would:
-    // 1. Take details (e.g., request_id, amount, reason).
-    // 2. Send these details to a human review system (e.g., via API).
-    // 3. Poll or wait for the human response (approved/rejected).
-    // 4. Return the human's decision.
-    async function externalApprovalTool(params: {amount: number, reason: string}): Promise<{decision: string}> {
-      // ... implementation to call external system
-      return {decision: 'approved'}; // or 'rejected'
-    }
-
-    const approvalTool = new FunctionTool({
-      name: 'external_approval_tool',
-      description: 'Sends a request for human approval.',
-      parameters: z.object({
-        amount: z.number(),
-        reason: z.string(),
-      }),
-      execute: externalApprovalTool,
-    });
-
+    // Conceptual Code: Using the built-in requestInput tool
+    import { LlmAgent, SequentialAgent, requestInput } from '@google/adk';
 
     // Agent that prepares the request
     const prepareRequest = new LlmAgent({
@@ -879,11 +845,11 @@ your project requirements before committing to a full implementation.
         // ... likely sets state['approval_amount'] and state['approval_reason'] ...
     });
 
-    // Agent that calls the human approval tool
+    // Agent that calls the built-in requestInput tool
     const requestApproval = new LlmAgent({
         name: 'RequestHumanApproval',
-        instruction: 'Use the external_approval_tool with amount from state["approval_amount"] and reason from state["approval_reason"].',
-        tools: [approvalTool],
+        instruction: 'Use the requestInput tool to ask the user to approve the amount from state["approval_amount"] and reason from state["approval_reason"].',
+        tools: [requestInput],
         outputKey: 'human_decision'
     });
 
@@ -915,20 +881,10 @@ your project requirements before committing to a full implementation.
 === "Java"
 
     ```java
-    // Conceptual Code: Using a Tool for Human Approval
+    // Conceptual Code: Using the built-in RequestInputTool
     import com.google.adk.agents.LlmAgent;
     import com.google.adk.agents.SequentialAgent;
-    import com.google.adk.tools.FunctionTool;
-
-
-    // --- Assume external_approval_tool exists ---
-    // This tool would:
-    // 1. Take details (e.g., request_id, amount, reason).
-    // 2. Send these details to a human review system (e.g., via API).
-    // 3. Poll or wait for the human response (approved/rejected).
-    // 4. Return the human's decision.
-    // public boolean externalApprovalTool(float amount, String reason) { ... }
-    FunctionTool approvalTool = FunctionTool.create(externalApprovalTool);
+    import com.google.adk.tools.RequestInputTool;
 
 
     // Agent that prepares the request
@@ -939,11 +895,11 @@ your project requirements before committing to a full implementation.
         .build();
 
 
-    // Agent that calls the human approval tool
+    // Agent that calls the built-in RequestInputTool
     LlmAgent requestApproval = LlmAgent.builder()
         .name("RequestHumanApproval")
-        .instruction("Use the external_approval_tool with amount from state['approval_amount'] and reason from state['approval_reason'].")
-        .tools(approvalTool)
+        .instruction("Use the RequestInput tool to ask the user to approve the amount from state['approval_amount'] and reason from state['approval_reason'].")
+        .tools(new RequestInputTool())
         .outputKey("human_decision")
         .build();
 
